@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  name          String
+  password      String
+  role          Role         @default(USER)
+  isActive      Boolean      @default(false)
+  shopId        String?
+  shop          Shop?        @relation(fields: [shopId], references: [id])
+  reservations  Reservation[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([email])
+}
+
+model Shop {
+  id              String        @id @default(cuid())
+  name            String
+  openTime        String        // HH:mm形式
+  closeTime       String        // HH:mm形式
+  users           User[]
+  cars            Car[]
+  reservations    Reservation[]
+  maintenances    Maintenance[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Car {
+  id            String        @id @default(cuid())
+  name          String
+  isAvailable   Boolean       @default(true)
+  shopId        String
+  shop          Shop          @relation(fields: [shopId], references: [id])
+  reservations  Reservation[]
+  maintenances  Maintenance[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([shopId])
+}
+
+model Reservation {
+  id            String    @id @default(cuid())
+  startTime     DateTime
+  endTime       DateTime
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  carId         String
+  car           Car       @relation(fields: [carId], references: [id])
+  shopId        String
+  shop          Shop      @relation(fields: [shopId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([carId])
+  @@index([shopId])
+}
+
+model Maintenance {
+  id            String    @id @default(cuid())
+  startTime     DateTime
+  endTime       DateTime
+  description   String
+  carId         String
+  car           Car       @relation(fields: [carId], references: [id])
+  shopId        String
+  shop          Shop      @relation(fields: [shopId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([carId])
+  @@index([shopId])
+}
+
+model AllowedDomain {
+  id        String   @id @default(cuid())
+  domain    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  ADMIN
+  SHOP_MANAGER
+  USER
+}
